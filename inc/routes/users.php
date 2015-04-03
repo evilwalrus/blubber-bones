@@ -31,7 +31,7 @@ use Blubber\Core\Request, Blubber\Core\Response;
  */
 $app->route('/users/!user_name/*user_action', function() use ($app) {
 
-    $this->get(function(Request $request, Response $response, $params) use ($app) {
+    $app->get(function(Request $request, Response $response, $params) use ($app) {
 
         $response->write(200, $params);
 

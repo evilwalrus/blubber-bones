@@ -25,16 +25,18 @@
 use Blubber\Core\Request, Blubber\Core\Response;
 
 $app->route('/basic_auth', function() use ($app) {
-    $this->post(function(Request $request, Response $response, $params) use ($app) {
+
+    $app->post(function(Request $request, Response $response, $params) use ($app) {
         //
         // auth.basic throws an HTTPException on bad credentials, so
         // there's no need to verify the information here.  If the credentials
         // succeed, then we can move on with our code.
         //
-        $this->emit('auth.basic');
+        $app->emit('auth.basic');
 
         $response->write(200, $request->getHeaders());
 
         return $response;
     });
+
 })->name('basic_auth_using_hook');  // route is now internally named
