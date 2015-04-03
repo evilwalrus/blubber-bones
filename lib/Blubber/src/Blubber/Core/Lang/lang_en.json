@@ -1,0 +1,18 @@
+{
+  "invalid.method": "Method \"%s\" not found in class \"%s\"",
+  "method.not.allowed": "Requested HTTP method not allowed/implemented for this route",
+  "invalid.user.agent": "Valid user agent required for access",
+  "invalid.namespace": "Invalid namespace for requested path",
+  "auth.bad.values": "Authorization did not succeed (bad authorization values)",
+  "auth.failed": "Authorization did not succeed",
+  "missing.auth.callback": "Could not authenticate properly; Missing auth callback",
+  "route.not.found": "Requested route not found or required parameter mismatch",
+  "missing.response.data": "Missing response data for method",
+  "invalid.data.format": "Incoming content not a proper Content-Type format",
+  "auth.scheme.not.found": "Authorization scheme not found",
+  "auth.scheme.not.allowed": "Authorization scheme not allowed",
+  "missing.required.headers": "Missing required headers",
+  "unsupported.media": "Missing or unsupported media; Check Content-Type header for accuracy",
+  "require.https": "Connection was not secure.  Try again with HTTPS",
+  "deprecated.namespace": "Namespace is deprecated; please use current namespace noted in X-Blubber-Upgrade"
+}

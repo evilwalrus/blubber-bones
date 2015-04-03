@@ -1,0 +1,18 @@
+{
+  "invalid.method": "Método \"%s\" no se encuentra en la clase \"%s\"",
+  "method.not.allowed": "Método HTTP solicitado no permitía / implementado para esta ruta",
+  "invalid.user.agent": "Agente de usuario válido requerido para el acceso",
+  "invalid.namespace": "Espacio de nombres no válido para el trayecto solicitado",
+  "auth.bad.values": "Autorización no tuvo éxito (valores mal de autorización)",
+  "auth.failed": "Autorización no tuvo éxito",
+  "missing.auth.callback": "No se pudo autenticar correctamente; Falta de devolución de llamada de autenticación",
+  "route.not.found": "Ruta solicitada no se encuentra o se requiere de parámetros no coincide",
+  "missing.response.data": "Datos de la respuesta que faltan para el método",
+  "invalid.data.format": "Contenido entrante no es un formato adecuado Content-Type",
+  "auth.scheme.not.found": "Régimen de autorización no encontrado",
+  "auth.scheme.not.allowed": "Régimen de autorización no permitido",
+  "missing.required.headers": "Falta encabezados requeridos",
+  "unsupported.media": "Falta o medios no admitidos; Compruebe cabecera Content-Type de precisión",
+  "require.https": "La conexión no era seguro. Inténtalo de nuevo con HTTPS",
+  "deprecated.namespace": "Espacio de nombres está en desuso; por favor utilice espacio de nombres actual se indica en X-Blubber-Upgrade"
+}
