@@ -1,0 +1,8 @@
+filter:
+    excluded_paths:
+    - doc/
+    - examples/
+    - index.php
+    - SplClassLoader.php
+    - autoloader.php
+    - vendor/

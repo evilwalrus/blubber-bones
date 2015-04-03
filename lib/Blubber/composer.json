@@ -1,0 +1,25 @@
+{
+  "name": "evilwalrus/Blubber",
+  "type": "library",
+  "description": "Blubber is a Rapid API framework for PHP 5.4+",
+  "keywords": ["api","rest","router","framework","http"],
+  "homepage": "https://github.com/evilwalrus/Blubber",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Andrew Heebner",
+      "email": "andrew.heebner@gmail.com",
+      "homepage": "https://github.com/evilwalrus",
+      "role": "Lead Developer"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0"
+  },
+  "autoload": {
+    "classmap": ["src/"],
+    "psr-0": { "Blubber": "src/" }
+  },
+  "prefer-stable": true
+
+}
