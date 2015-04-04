@@ -51,10 +51,9 @@ $app->on('auth.hmac', function() use ($app) {
         // Calculate the content hash; this must be the same method the client used to hash the content.
         // Whole request URI (including query string and starting slash) concat with public key.
         //
-        //  api endpoint is -> https://localhost
-        //  request uri is  -> /v3/hmac_test
+        //  getRequestLocation() -> https://localhost/v3/hmac_test
         //
-        $hmac->setContent($app->getRequestUri() . $public_key);
+        $hmac->setContent($app->getRequestLocation() . $public_key);
         $content_hash = $hmac->getSignature();
 
         if ($hmac->hashEquals($hash_header)) {

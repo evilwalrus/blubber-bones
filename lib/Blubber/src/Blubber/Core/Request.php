@@ -210,6 +210,25 @@ abstract class Request
     }
 
     /**
+     * Returns the complete URL to the request from start-to-finish
+     *
+     * @param bool $with_uri Include URI with location
+     * @return string
+     */
+    public static function getRequestLocation($with_uri = true)
+    {
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $parse = parse_url(
+                (isset($_SERVER['HTTPS']) && strcasecmp($_SERVER['HTTPS'], 'off') ? 'https://' : 'http://') .
+                (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '')) . (($with_uri) ? $_SERVER['REQUEST_URI'] : null)
+            );
+            $parse['port'] = $_SERVER["SERVER_PORT"]; // Setup protocol for sure (80 is default)
+
+            return http_build_url('', $parse);
+        }
+    }
+
+    /**
      * Gets the absolute request URI of the incoming request
      *
      * return string

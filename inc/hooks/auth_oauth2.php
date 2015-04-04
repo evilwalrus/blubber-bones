@@ -22,19 +22,35 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-$app->on('auth.basic', function() use ($app) {
+$app->on('oauth2.authorize', function($client_id, $client_secret) {
+    /**
+     * Issue an authorization code
+     */
+});
+
+$app->on('oauth2.access.token', function($auth_code) {
+    /**
+     * Issue a new access token using the supplied authorization code
+     */
+});
+
+$app->on('oauth2.refresh.token', function($access_token, $refresh_token) {
+    /**
+     * Issue a new access token using the supplied refresh token
+     *
+     * if $access_token equals old access token (looking up using refresh token), then
+     * we issue (and store) a new access token (and refresh token) and send it to the client.
+     */
+});
+
+// used as event handler to check if we have the Bearer token
+$app->on('auth.oauth2', function() use ($app) {
     $auth = $app->getAuthorization();
 
-    if (!is_null($auth)) {
-        if (strtolower($auth['auth_scheme']) == 'basic') {
-            $creds = $app->getBasicAuthCredentials($auth['auth_data']);
-
-            if ($creds['username'] == 'andrew' && $creds['password'] == 'foo') {
-                return true;
-            }
-        }
+    if (is_array($auth) && $auth['auth_scheme'] == 'Bearer') {
+        $token = $auth['auth_data'];
+        /**
+         * Do your custom token lookup here, and return true or false accordingly
+         */
     }
-
-    // Blubber\t('') is a shortcut function for I18n::get($string)
-    throw new HTTPException(\Blubber\t('auth.failed'), 401);
 });

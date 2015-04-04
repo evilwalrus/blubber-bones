@@ -22,19 +22,20 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-$app->on('auth.basic', function() use ($app) {
-    $auth = $app->getAuthorization();
+use Blubber\Core\Request, Blubber\Core\Response;
 
-    if (!is_null($auth)) {
-        if (strtolower($auth['auth_scheme']) == 'basic') {
-            $creds = $app->getBasicAuthCredentials($auth['auth_data']);
+$app->route('/oauth/authorize', function() use ($app) {
 
-            if ($creds['username'] == 'andrew' && $creds['password'] == 'foo') {
-                return true;
-            }
-        }
-    }
+    $app->post(function(Request $request, Response $response, $params) {
 
-    // Blubber\t('') is a shortcut function for I18n::get($string)
-    throw new HTTPException(\Blubber\t('auth.failed'), 401);
+    });
+
+});
+
+$app->route('/oauth/access_token', function() use ($app) {
+
+    $app->post(function(Request $request, Response $response, $params) {
+
+    });
+
 });
