@@ -27,6 +27,7 @@ use Blubber\Core\Request, Blubber\Core\Response;
 $app->route('/oauth/authorize', function() use ($app) {
 
     $app->post(function(Request $request, Response $response, $params) {
+        $postData = $request->getContent();
 
     });
 

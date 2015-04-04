@@ -383,32 +383,34 @@ abstract class Request
     }
 
     /**
+     * Get authorization header data
+     *
+     * @param bool $dataAsArray Return data as an array
      * @return array|null
      */
-    public function getAuthorization()
+    public function getAuthorization($dataAsArray = true)
     {
-        /**
-         * TODO: Make this compatible with OAuth1 and other schemes
-         *
-         * We need to split the comma-delimited components, which are ultimately URL-encoded
-         * and also separated by =:
-         *
-         * Authorization: OAuth realm="http://api.example.com/",
-         * oauth_consumer_key="0685bd9184jfhq22",
-         * oauth_token="ad180jjd733klru7",
-         * oauth_signature_method="HMAC-SHA1",
-         * oauth_signature="wOJIO9A2W5mFwDgiDvZbTSMK%2FPY%3D",
-         * oauth_timestamp="137131200",
-         * oauth_nonce="4572616e48616d6d65724c61686176",
-         * oauth_version="1.0"
-         *
-         * Use rawurldecode and rawurlencode
-         */
         $auth = static::getHeader('Authorization');
+        $authData = [];
 
         if (!empty($auth)) {
-            list($type, $data) = explode(' ', $auth, 2);
-            return ['auth_scheme' => $type, 'auth_data' => $data];
+            $parts = explode(' ', $auth, 3);
+            array_shift($parts);
+
+            $authData['auth_scheme'] = $parts[0];
+            $authData['auth_data'] = $parts[1];
+
+            if ($dataAsArray && strpos($auth, ',') !== false) {
+                $authData['auth_data'] = [];
+                $data = explode(',', $parts[1]);
+
+                foreach ($data as $part) {
+                    $kv = explode('=', $part);
+                    $authData['auth_data'][$kv[0]] = str_replace('"', '', $kv[1]);
+                }
+            }
+
+            return $authData;
         }
 
         return null;

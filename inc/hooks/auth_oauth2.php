@@ -47,11 +47,12 @@ $app->on('oauth2.refresh.token', function($access_token, $refresh_token) {
 $app->on('auth.oauth2', function() use ($app) {
     //
     // Use getAuthorization() to parse the Authorization header into components
+    //   false means we want the string version, not the array
     //
-    $auth = $app->getAuthorization();
+    $auth = $app->getAuthorization(false);
 
     if (is_array($auth) && $auth['auth_scheme'] == 'Bearer') {
-        $token = $auth['auth_data'];
+        $bearer_token = $auth['auth_data'];
         /**
          * Do your custom token lookup here, and return true or false accordingly
          */

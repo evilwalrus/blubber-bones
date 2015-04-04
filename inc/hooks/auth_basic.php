@@ -23,7 +23,7 @@
  */
 
 $app->on('auth.basic', function() use ($app) {
-    $auth = $app->getAuthorization();
+    $auth = $app->getAuthorization(false);
 
     if (!is_null($auth)) {
         if (strtolower($auth['auth_scheme']) == 'basic') {
