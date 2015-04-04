@@ -45,6 +45,9 @@ $app->on('oauth2.refresh.token', function($access_token, $refresh_token) {
 
 // used as event handler to check if we have the Bearer token
 $app->on('auth.oauth2', function() use ($app) {
+    //
+    // Use getAuthorization() to parse the Authorization header into components
+    //
     $auth = $app->getAuthorization();
 
     if (is_array($auth) && $auth['auth_scheme'] == 'Bearer') {

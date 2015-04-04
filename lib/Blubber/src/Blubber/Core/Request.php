@@ -382,8 +382,28 @@ abstract class Request
         return static::$_data;
     }
 
+    /**
+     * @return array|null
+     */
     public function getAuthorization()
     {
+        /**
+         * TODO: Make this compatible with OAuth1 and other schemes
+         *
+         * We need to split the comma-delimited components, which are ultimately URL-encoded
+         * and also separated by =:
+         *
+         * Authorization: OAuth realm="http://api.example.com/",
+         * oauth_consumer_key="0685bd9184jfhq22",
+         * oauth_token="ad180jjd733klru7",
+         * oauth_signature_method="HMAC-SHA1",
+         * oauth_signature="wOJIO9A2W5mFwDgiDvZbTSMK%2FPY%3D",
+         * oauth_timestamp="137131200",
+         * oauth_nonce="4572616e48616d6d65724c61686176",
+         * oauth_version="1.0"
+         *
+         * Use rawurldecode and rawurlencode
+         */
         $auth = static::getHeader('Authorization');
 
         if (!empty($auth)) {
@@ -394,6 +414,11 @@ abstract class Request
         return null;
     }
 
+    /**
+     * @param $auth_data
+     *
+     * @return array
+     */
     public function getBasicAuthCredentials($auth_data)
     {
         $data = base64_decode($auth_data);
@@ -403,7 +428,7 @@ abstract class Request
 
     /**
      * Allow API creator to set their own custom JSON content-type
-     *    ex: application/vnd.sappy+json (must end in "json")
+     *    ex: application/vnd.blubber+json (must end in "json")
      *
      * @param  string $contentType
      * @return void
