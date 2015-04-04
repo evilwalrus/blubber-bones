@@ -32,7 +32,7 @@ $app->route('/basic_auth', function() use ($app) {
         // there's no need to verify the information here.  If the credentials
         // succeed, then we can move on with our code.
         //
-        $app->emit('auth.basic');
+        $app->dispatch('auth.basic');
 
         $response->write(200, $request->getHeaders());
 

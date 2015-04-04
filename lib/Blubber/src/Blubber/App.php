@@ -100,7 +100,7 @@ class App extends Request
         try {
             self::setContent(@file_get_contents('php://input'));
         } catch (HTTPException $e) {
-            self::emit('error', [$e]);
+            self::dispatch('error', [$e]);
         }
     }
 
@@ -176,7 +176,7 @@ class App extends Request
         try {
             $data = parent::getContent();
         } catch (HTTPException $e) {
-            self::emit('error', [$e]);
+            self::dispatch('error', [$e]);
         }
 
         return $data;
@@ -325,13 +325,13 @@ class App extends Request
     }
 
     /**
-     * Emit a named event with specified args
+     * Dispatch a named event with specified args
      *
      * @param  string $event
      * @param  array  $args
      * @return mixed
      */
-    public function emit($event, array $args = [])
+    public function dispatch($event, array $args = [])
     {
         $response = null;
 
@@ -341,8 +341,8 @@ class App extends Request
             try {
                 $response = call_user_func_array($callback->bindTo($this, $this), $args);
             } catch (HTTPException $ex) {
-                // re-emit our Exception as an error
-                self::emit('error', [$ex]);
+                // re-dispatch our Exception as an error
+                self::dispatch('error', [$ex]);
             }
 
             if ($response instanceof Response) {
@@ -351,7 +351,7 @@ class App extends Request
                 try {
                     $response->send($headers);
                 } catch (HTTPException $e) {
-                    self::emit('error', [$e]);
+                    self::dispatch('error', [$e]);
                 }
             }
         }
@@ -367,7 +367,7 @@ class App extends Request
     {
         if (self::getOption('require_https')) {
             if (!self::isSecure()) {
-                self::emit('error', [new HTTPException(t('require.https'), 400)]);
+                self::dispatch('error', [new HTTPException(t('require.https'), 400)]);
             }
         }
     }
@@ -392,7 +392,7 @@ class App extends Request
 
             if (!empty($errArr)) {
                 $errMsg = t('missing.required.headers') . ': ' . join(', ', $errArr);
-                self::emit('error', [new HTTPException($errMsg, 400)]);
+                self::dispatch('error', [new HTTPException($errMsg, 400)]);
             }
         }
     }
@@ -410,13 +410,13 @@ class App extends Request
         if (self::getOption('require_user_agent')) {
             if (self::hasEventHandler('__USER_AGENT__')) {
                 if (null !== ($_ua = self::getUserAgent())) {
-                    $_uaCheck = self::emit('__USER_AGENT__', [$_ua]);
+                    $_uaCheck = self::dispatch('__USER_AGENT__', [$_ua]);
 
                     if ($_uaCheck === false) {
-                        self::emit('error', [new HTTPException(t('invalid.user.agent'), 400)]);
+                        self::dispatch('error', [new HTTPException(t('invalid.user.agent'), 400)]);
                     }
                 } else {
-                    self::emit('error', [new HTTPException(t('invalid.user.agent'), 400)]);
+                    self::dispatch('error', [new HTTPException(t('invalid.user.agent'), 400)]);
                 }
             }
             // allow all requests if they didn't setup the event handler, regardless of the option setting
@@ -442,7 +442,7 @@ class App extends Request
             try {
                 $response = call_user_func_array($closure->bindTo($this, $this), [$this, new Response(), $params]);
             } catch (HTTPException $ex) {
-                self::emit('error', [$ex]);
+                self::dispatch('error', [$ex]);
             }
 
             if ($response instanceof Response) {
@@ -476,13 +476,13 @@ class App extends Request
                 try {
                     $response->send($headers);
                 } catch (HTTPException $e) {
-                    self::emit('error', [$e]);
+                    self::dispatch('error', [$e]);
                 }
             } else {
-                self::emit('error', [new HTTPException(t('missing.response.data'), 500)]);
+                self::dispatch('error', [new HTTPException(t('missing.response.data'), 500)]);
             }
         } else {
-            self::emit('error', [new HTTPException(t('method.not.allowed'), 405, $allow_header)]);
+            self::dispatch('error', [new HTTPException(t('method.not.allowed'), 405, $allow_header)]);
         }
     }
 
@@ -506,7 +506,7 @@ class App extends Request
             if ($route instanceof Route) {
                 // Does the route have a valid namespace?
                 if (!$route->isValidNamespace($this)) {
-                    self::emit('error', [new HTTPException(t('invalid.namespace'), 403)]);
+                    self::dispatch('error', [new HTTPException(t('invalid.namespace'), 403)]);
                 }
 
                 $method   = strtolower(self::getRequestMethod());
@@ -515,7 +515,7 @@ class App extends Request
 
                 self::runMethodCallback($route, $callback, $params);
             } else {
-                self::emit('error', [new HTTPException(t('route.not.found'), 404)]);
+                self::dispatch('error', [new HTTPException(t('route.not.found'), 404)]);
             }
         }
     }
@@ -569,7 +569,7 @@ class App extends Request
             // Allow user to get a events before they're sent to the client
             //
             if (self::hasEventHandler('__ERROR__')) {
-                self::emit('__ERROR__', $err_response);
+                self::dispatch('__ERROR__', $err_response);
             }
 
             $response = new Response();

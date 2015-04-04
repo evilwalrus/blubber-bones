@@ -193,7 +193,7 @@ class TestApi extends \Blubber\App
         // send the request headers back to the user
         $this->route('/headers/*withNamespace', function() {
             $this->get(function ($request, $response, $params) {
-                $rateHeaders = $this->emit('rate.limit', [$request->getRemoteAddr()]);
+                $rateHeaders = $this->dispatch('rate.limit', [$request->getRemoteAddr()]);
 
                 if (isset($params['withNamespace'])) {
                     $rateHeaders['X-Namespace'] = $request->getNamespace();
@@ -225,7 +225,7 @@ class TestApi extends \Blubber\App
         $this->route('/hmac_test', function() {
 
             $this->get(function($request, $response, $params) {
-                $hmac = $this->emit('auth.hmac.verify');
+                $hmac = $this->dispatch('auth.hmac.verify');
 
                 $response->write(200, $hmac);
                 return $response;
@@ -234,10 +234,10 @@ class TestApi extends \Blubber\App
             $this->post(function($request, $response, $params) {
 
                 //
-                // This emitter throws an HTTPException if certain conditions aren't met.  Otherwise,
+                // This dispatchter throws an HTTPException if certain conditions aren't met.  Otherwise,
                 // it will always return valid data and doesn't really need to be checked against.
                 //
-                $hmac = $this->emit('auth.hmac.verify');
+                $hmac = $this->dispatch('auth.hmac.verify');
 
                 $response->write(201, $hmac);
                 return $response;
@@ -252,7 +252,7 @@ class TestApi extends \Blubber\App
                 // there's no need to verify the information here.  If the credentials
                 // succeed, then we can move on with our code.
                 //
-                $this->emit('auth.basic.verify');
+                $this->dispatch('auth.basic.verify');
 
                 $response->write(200, $request->getHeaders());
 

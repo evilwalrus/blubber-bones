@@ -27,7 +27,7 @@ use Blubber\Core\Request, Blubber\Core\Response;
 $app->route('/hmac_test', function() use ($app) {
 
     $app->get(function(Request $request, Response $response, $params) use ($app) {
-        $hmac = $app->emit('auth.hmac');
+        $hmac = $app->dispatch('auth.hmac');
 
         $response->write(200, $hmac);
         return $response;
@@ -36,10 +36,10 @@ $app->route('/hmac_test', function() use ($app) {
     $app->post(function(Request $request, Response $response, $params) use ($app) {
 
         //
-        // This emitter throws an HTTPException if certain conditions aren't met.  Otherwise,
+        // This dispatchter throws an HTTPException if certain conditions aren't met.  Otherwise,
         // it will always return valid data and doesn't really need to be checked against.
         //
-        $hmac = $app->emit('auth.hmac');
+        $hmac = $app->dispatch('auth.hmac');
 
         $response->write(201, $hmac);
         return $response;

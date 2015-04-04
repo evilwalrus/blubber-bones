@@ -70,7 +70,7 @@ class KeyServer extends \Blubber\App
         // /v1/generate/sha256/somerandomsalt
         $this->route('/generate/:user_algo/?:user_salt', function() {
             $this->get(function($request, $response, $params) {
-                $keygen = $this->emit('generate.key', [$params]);
+                $keygen = $this->dispatch('generate.key', [$params]);
 
                 $response->write(200, ['keygen' => $keygen]);
 
