@@ -213,7 +213,7 @@ abstract class Request
      * Returns the complete URL to the request from start-to-finish
      *
      * @param bool $with_uri Include URI with location
-     * @return string
+     * @return string|null
      */
     public static function getRequestLocation($with_uri = true)
     {
@@ -226,6 +226,8 @@ abstract class Request
 
             return http_build_url('', $parse);
         }
+
+        return null;
     }
 
     /**
