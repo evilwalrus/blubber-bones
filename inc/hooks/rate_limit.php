@@ -24,7 +24,6 @@
 
 use Blubber\Core\RateLimiter;
 use Blubber\Core\Adapters\RateLimiter\RedisAdapter;
-use Blubber\Core\Tools;
 
 //
 // $cost is the cost of the rate-limiting to the user
@@ -32,9 +31,16 @@ use Blubber\Core\Tools;
 $app->on('__RATE_LIMIT__', function($cost) use ($app) {
     /**
      * Use the RedisAdapter in our case
-     * args: Adapter, limit = 100, reset = 3600, cost = 1 (or $cost)
      */
-    $rl = new RateLimiter(new RedisAdapter('127.0.0.1', 6379));
+    $red = new RedisAdapter('127.0.0.1', 6379);
+    $rl = new RateLimiter($red);
+
+    /**
+     * TODO: Setup different limit profiles:
+     *   - Non-auth users would have less or no rate-limit
+     *   - Basic auth would have increased privileges
+     *   - OAuth, HMAC, and custom schemes would take the cake
+     */
 
     /**
      * These are all default values, but just showing for semantics
@@ -49,7 +55,7 @@ $app->on('__RATE_LIMIT__', function($cost) use ($app) {
      *
      * setKey() is super important here, as it's the only means we have to identify the user
      */
-    $rl->setKey($app->getRealRemoteAddr());
+    $rl->setKey(md5($app->getRealRemoteAddr()));
 
     /*
      * if checkLimits() is not true, then it throws an HTTPException
@@ -60,5 +66,5 @@ $app->on('__RATE_LIMIT__', function($cost) use ($app) {
      * return the headers so that we can append them to our headers list after this
      * hook is completed.
      */
-    return $rl->getLimitHeaders();
+    return array_merge($rl->getLimitHeaders(), ['X-RateLimit-Key' => $rl->getKey()]);
 });

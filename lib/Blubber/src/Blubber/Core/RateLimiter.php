@@ -36,20 +36,16 @@ class RateLimiter
     protected $userLimit = null;
     protected $userReset = null;
 
-    protected $key = 'rl:';
+    public $key;
 
-    protected $limit = 100;  // 100 requests in below unit
-    protected $reset = 3600; // one hour
-    protected $cost  = 1;    // each request costs one credit
+    public $limit; // = 100;  // 100 requests in below unit
+    public $reset; // = 3600; // one hour
+    public $cost; //  = 1;    // each request costs one credit
 
 
-    public function __construct(RateLimiterInterface $adapter, $limit = 100, $reset = 3600, $cost = 1)
+    public function __construct(RateLimiterInterface $adapter)
     {
         $this->adapter = $adapter;
-
-        $this->limit = $limit;
-        $this->reset = $reset;
-        $this->cost  = $cost;
     }
 
     //
@@ -69,7 +65,7 @@ class RateLimiter
 
     public function setKey($key)
     {
-        $this->key .= $key;
+        $this->key = $key;
     }
 
     public function getKey()
@@ -77,7 +73,7 @@ class RateLimiter
         return $this->key;
     }
 
-    public function setLimit($limit = 100)
+    public function setLimit($limit)
     {
         $this->limit = $limit;
     }
@@ -87,7 +83,7 @@ class RateLimiter
         return $this->limit;
     }
 
-    public function setReset($reset = 3600)
+    public function setReset($reset)
     {
         $this->reset = $reset;
     }
@@ -97,7 +93,7 @@ class RateLimiter
         return $this->reset;
     }
 
-    public function setCost($cost = 1)
+    public function setCost($cost)
     {
         $this->cost = $cost;
     }
@@ -111,7 +107,7 @@ class RateLimiter
     {
         self::_setLimits();
 
-        return ($this->userLimit == $this->adapter->getLimit()) ? true : false;
+        return ($this->userLimit == $this->limit) ? true : false;
     }
 
     public function getLimitHeaders()
@@ -126,6 +122,13 @@ class RateLimiter
     private function _setLimits()
     {
         if (is_null($this->userLimit) && is_null($this->userReset)) {
+            $this->adapter->setAdapterData([
+                'key' => $this->key,
+                'limit' => $this->limit,
+                'reset' => $this->reset,
+                'cost' => $this->cost
+            ]);
+
             $this->userLimit = $this->adapter->getUserLimit();
             $this->userReset = $this->adapter->getUserReset();
         }

@@ -53,14 +53,15 @@ class RedisAdapter extends RateLimiter implements RateLimiterInterface
         $currentLimit = $this->cost;
 
         if ($this->redis->exists($this->key)) {
-            $current_limit = $this->redis->get($this->key);
+            $currentLimit = $this->redis->get($this->key);
 
-            if ($current_limit < $this->limit) {
+            if ($currentLimit < $this->limit) {
                 // increment when user performs an action at cost
                 $this->redis->incrBy($this->key, $this->cost);
-                return $current_limit;
+
+                return ($currentLimit + $this->cost);
             } else {
-                // rate-limited, return the max limit
+                // rate-limited; return the max limit
                 return $this->limit;
             }
         } else {
@@ -74,6 +75,13 @@ class RedisAdapter extends RateLimiter implements RateLimiterInterface
     public function getUserReset()
     {
         return $this->redis->ttl($this->key);
+    }
+
+    protected function setAdapterData($data)
+    {
+        foreach ($data as $k => $v) {
+            $this->{$k} = $v;
+        }
     }
 
 }
