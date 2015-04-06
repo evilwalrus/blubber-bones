@@ -22,21 +22,35 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-use Blubber\Exceptions\HTTPException;
+use Blubber\Core\RateLimiter;
+use Blubber\Core\Adapters\RateLimiter\RedisAdapter;
+use Blubber\Core\Tools;
 
-$app->on('auth.basic', function() use ($app) {
-    $auth = $app->getAuthorization(false);
+//
+// $cost is the cost of the rate-limiting to the user
+//
+$app->on('__RATE_LIMIT__', function($cost) use ($app) {
+    /**
+     * Use the RedisAdapter in our case
+     */
+    $rl = new RateLimiter(new RedisAdapter('127.0.0.1', 6379));
 
-    if (!is_null($auth)) {
-        if (strtolower($auth['auth_scheme']) == 'basic') {
-            $creds = $app->getBasicAuthCredentials($auth['auth_data']);
+    /**
+     * Realistically, we'd probably use the users API key and/or hash of some type
+     * in order to identify them and produce a key for storage.
+     *
+     * setKey() is super important here, as it's the only means we have to identify the user
+     */
+    $rl->setKey($app->getRealRemoteAddr());
 
-            if ($creds['username'] == 'andrew' && $creds['password'] == 'foo') {
-                return true;
-            }
-        }
-    }
+    /*
+     * if checkLimits() is not true, then it throws an HTTPException
+     */
+    $rl->checkLimits();
 
-    // Blubber\t('') is a shortcut function for I18n::get($string)
-    throw new HTTPException(\Blubber\t('auth.failed'), 401);
+    /**
+     * return the headers so that we can append them to our headers list after this
+     * hook is completed.
+     */
+    return $rl->getLimitHeaders();
 });

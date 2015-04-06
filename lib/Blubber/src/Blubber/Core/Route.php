@@ -215,6 +215,35 @@ class Route
         ];
     }
 
+    public function setMethodRateLimit($method, $hook, $cost)
+    {
+        $this->_methodCallbacks[$method]['rateLimit']['hook'] = $hook;
+        $this->_methodCallbacks[$method]['rateLimit']['cost'] = $cost;
+    }
+
+    public function getMethodRateLimit($method)
+    {
+        if (array_key_exists('rateLimit', $this->_methodCallbacks[$method])) {
+            return $this->_methodCallbacks[$method]['rateLimit'];
+        }
+
+        return null;
+    }
+
+    public function setMethodAuth($method, $hook)
+    {
+        $this->_methodCallbacks[$method]['auth']['hook'] = $hook;
+    }
+
+    public function getMethodAuth($method)
+    {
+        if (array_key_exists('auth', $this->_methodCallbacks[$method])) {
+            return $this->_methodCallbacks[$method]['auth'];
+        }
+
+        return null;
+    }
+
     /**
      * Set valid namespaces for this route
      *

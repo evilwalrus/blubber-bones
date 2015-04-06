@@ -22,21 +22,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-use Blubber\Exceptions\HTTPException;
+namespace Blubber\Core\Interfaces;
 
-$app->on('auth.basic', function() use ($app) {
-    $auth = $app->getAuthorization(false);
 
-    if (!is_null($auth)) {
-        if (strtolower($auth['auth_scheme']) == 'basic') {
-            $creds = $app->getBasicAuthCredentials($auth['auth_data']);
-
-            if ($creds['username'] == 'andrew' && $creds['password'] == 'foo') {
-                return true;
-            }
-        }
-    }
-
-    // Blubber\t('') is a shortcut function for I18n::get($string)
-    throw new HTTPException(\Blubber\t('auth.failed'), 401);
-});
+interface RateLimiterInterface
+{
+    public function getUserLimit();
+    public function getUserReset();
+    public function getReset();
+    public function getLimit();
+    public function getKey();
+    public function setKey($key);
+}

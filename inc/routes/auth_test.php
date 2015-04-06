@@ -22,21 +22,19 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-use Blubber\Exceptions\HTTPException;
+use Blubber\Core\Request, Blubber\Core\Response;
 
-$app->on('auth.basic', function() use ($app) {
-    $auth = $app->getAuthorization(false);
+$app->route('/auth_test', function() use ($app) {
 
-    if (!is_null($auth)) {
-        if (strtolower($auth['auth_scheme']) == 'basic') {
-            $creds = $app->getBasicAuthCredentials($auth['auth_data']);
+    //
+    // Test out new auth hooks and rate limiting
+    //
+    $app
+        ->get(function(Request $request, Response $response, $params) use ($app) {
+            $response->write(200, ['foo' => 'bar']);
 
-            if ($creds['username'] == 'andrew' && $creds['password'] == 'foo') {
-                return true;
-            }
-        }
-    }
+            return $response;
+        })
+        ->rateLimit('__RATE_LIMIT__');
 
-    // Blubber\t('') is a shortcut function for I18n::get($string)
-    throw new HTTPException(\Blubber\t('auth.failed'), 401);
 });

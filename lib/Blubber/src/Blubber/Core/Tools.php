@@ -44,7 +44,7 @@ class Tools
 
     public static function shortHash($string)
     {
-        return crc32($string . time());
+        return crc32($string);
     }
 
 }

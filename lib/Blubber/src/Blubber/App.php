@@ -109,7 +109,7 @@ class App extends Request
      *
      * @param  string $method
      * @param  array  $args
-     * @return App|null
+     * @return App|false
      */
     public function __call($method, $args)
     {
@@ -122,11 +122,8 @@ class App extends Request
             }
         }
 
-        //
-        // TODO: Convert this to a 500 Server Error
-        //
-        // if we get here, trigger a PHP error
-        trigger_error(sprintf(t('invalid.method'), $method, __CLASS__), E_USER_ERROR);
+        self::dispatch('error', [new HTTPException(sprintf(t('invalid.method'), $method, __CLASS__), 500)]);
+        return false; // unreachable; put here just to clear IDE errors
     }
 
     /**
@@ -284,6 +281,30 @@ class App extends Request
     }
 
     /**
+     * Set rate-limiting options for RateLimiter (per method)
+     *
+     * @param string $hookName
+     * @param int $cost
+     * @return App
+     */
+    public function rateLimit($hookName = '__RATE_LIMIT__', $cost = 1)
+    {
+        self::getCurrentRoute()->setMethodRateLimit($this->_currMethod, $hookName, $cost);
+
+        return $this;
+    }
+
+    /**
+     * Set auth hook per method
+     */
+    public function auth($hook)
+    {
+        self::getCurrentRoute()->setMethodAuth($this->_currMethod, $hook);
+
+        return $this;
+    }
+
+    /**
      * Finish off all routes
      *
      * @return void
@@ -427,25 +448,44 @@ class App extends Request
      * Runs a callback for a specified HTTP method
      *
      * @param  Route  $route
-     * @param  mixed  $callback
+     * @param  string $method
      * @param  array $params
      * @return void
      */
-    protected function runMethodCallback(Route $route, $callback, $params)
+    protected function runMethodCallback(Route $route, $method, $params)
     {
         $allow_header = ['Allow' => strtoupper(join(', ', $route->getAvailableMethods()))];
+
+        $callback = $route->getMethodCallback($method);
 
         if (!is_null($callback) && is_array($callback)) {
 
             $closure = $callback['callback'];
 
+            $auth_hook = $route->getMethodAuth($method);
+            $rate_hook = $route->getMethodRateLimit($method);
+
             try {
+                // dispatch our auth event (if any)
+                if (!is_null($auth_hook)) {
+                    self::dispatch($auth_hook['hook']);
+                }
+
+                // dispatch the rate-limiting (if any)
+                if (!is_null($rate_hook)) {
+                    $rateHeaders = self::dispatch($rate_hook['hook'], [$rate_hook['cost']]);
+                }
+
+                // dispatch the main closure (will only execute if the above are successful)
                 $response = call_user_func_array($closure->bindTo($this, $this), [$this, new Response(), $params]);
             } catch (HTTPException $ex) {
                 self::dispatch('error', [$ex]);
             }
 
             if ($response instanceof Response) {
+
+                // add the rate-limiting headers
+                $response->headers($rateHeaders);
 
                 //
                 // As per HTTP spec, Options needs a list of methods set to the Allow header
@@ -510,10 +550,9 @@ class App extends Request
                 }
 
                 $method   = strtolower(self::getRequestMethod());
-                $callback = $route->getMethodCallback($method);
                 $params   = $route->getParams($this);
 
-                self::runMethodCallback($route, $callback, $params);
+                self::runMethodCallback($route, $method, $params);
             } else {
                 self::dispatch('error', [new HTTPException(t('route.not.found'), 404)]);
             }

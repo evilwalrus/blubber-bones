@@ -14,5 +14,6 @@
   "missing.required.headers": "Missing required headers",
   "unsupported.media": "Missing or unsupported media; Check Content-Type header for accuracy",
   "require.https": "Connection was not secure.  Try again with HTTPS",
-  "deprecated.namespace": "Namespace is deprecated; please use current namespace noted in X-Blubber-Upgrade"
+  "deprecated.namespace": "Namespace is deprecated; please use current namespace noted in X-Blubber-Upgrade",
+  "too.many.requests": "Rate limiting has met its limit.  Please see X-RateLimit-Reset for seconds until limiting reset"
 }

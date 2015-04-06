@@ -395,7 +395,6 @@ abstract class Request
 
         if (!empty($auth)) {
             $parts = explode(' ', $auth, 3);
-            array_shift($parts);
 
             $authData['auth_scheme'] = $parts[0];
             $authData['auth_data'] = $parts[1];
@@ -418,14 +417,16 @@ abstract class Request
 
     /**
      * @param $auth_data
+     * @param bool $asString
      *
-     * @return array
+     * @return string|array
      */
-    public function getBasicAuthCredentials($auth_data)
+    public function getBasicAuthCredentials($auth_data, $asString = false)
     {
         $data = base64_decode($auth_data);
         list($user, $pass) = explode(':', $data, 2);
-        return ['username' => $user, 'password' => $pass];
+
+        return ($asString) ? $auth_data : ['username' => $user, 'password' => $pass];
     }
 
     /**

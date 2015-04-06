@@ -121,7 +121,7 @@ class Response
      */
     public function headers($headers = [])
     {
-        $this->_headers = $headers;
+        $this->_headers = array_merge($this->_headers, $headers);
 
         return $this;
     }
