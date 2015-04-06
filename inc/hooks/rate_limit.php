@@ -32,8 +32,16 @@ use Blubber\Core\Tools;
 $app->on('__RATE_LIMIT__', function($cost) use ($app) {
     /**
      * Use the RedisAdapter in our case
+     * args: Adapter, limit = 100, reset = 3600, cost = 1 (or $cost)
      */
     $rl = new RateLimiter(new RedisAdapter('127.0.0.1', 6379));
+
+    /**
+     * These are all default values, but just showing for semantics
+     */
+    $rl->setCost($cost);
+    $rl->setLimit(100);
+    $rl->setReset(3600);
 
     /**
      * Realistically, we'd probably use the users API key and/or hash of some type

@@ -26,8 +26,9 @@ namespace Blubber\Core\Adapters\RateLimiter;
 
 
 use Blubber\Core\Interfaces\RateLimiterInterface;
+use Blubber\Core\RateLimiter;
 
-class RedisAdapter implements RateLimiterInterface
+class RedisAdapter extends RateLimiter implements RateLimiterInterface
 {
 
     private $redis;
@@ -35,19 +36,11 @@ class RedisAdapter implements RateLimiterInterface
     protected $host = '127.0.0.1';
     protected $port = 6379;
 
-    protected $limit = 100;  // 100 requests in below unit
-    protected $reset = 3600; // one hour
 
-    protected $key = 'rl:';
-
-
-    public function __construct($host, $port, $limit = 100, $reset = 3600)
+    public function __construct($host, $port)
     {
         $this->host = $host;
         $this->port = $port;
-
-        $this->limit = $limit;
-        $this->reset = $reset;
 
         $this->redis = new \Redis();
         $this->redis->connect($this->host, $this->port);
@@ -57,39 +50,25 @@ class RedisAdapter implements RateLimiterInterface
     // and return the current rate limit.
     public function getUserLimit()
     {
-        $currentLimit = 1;
+        $currentLimit = $this->cost;
 
         if ($this->redis->exists($this->key)) {
             $current_limit = $this->redis->get($this->key);
 
             if ($current_limit < $this->limit) {
                 // increment when user performs an action at cost
-                $this->redis->incrBy($this->key, 1);
+                $this->redis->incrBy($this->key, $this->cost);
                 return $current_limit;
             } else {
                 // rate-limited, return the max limit
                 return $this->limit;
             }
         } else {
-            $this->redis->setex($this->key, $this->reset, 1);
+            // set the key with a TTL
+            $this->redis->setex($this->key, $this->reset, $this->cost);
         }
 
         return $currentLimit;
-    }
-
-    public function getLimit()
-    {
-        return $this->limit;
-    }
-
-    public function getReset()
-    {
-        return $this->reset;
-    }
-
-    public function getKey()
-    {
-        return $this->key;
     }
 
     public function getUserReset()
@@ -97,8 +76,4 @@ class RedisAdapter implements RateLimiterInterface
         return $this->redis->ttl($this->key);
     }
 
-    public function setKey($key)
-    {
-        $this->key = $key;
-    }
 }

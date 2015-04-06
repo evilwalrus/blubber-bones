@@ -29,8 +29,4 @@ interface RateLimiterInterface
 {
     public function getUserLimit();
     public function getUserReset();
-    public function getReset();
-    public function getLimit();
-    public function getKey();
-    public function setKey($key);
 }

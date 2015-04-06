@@ -36,10 +36,20 @@ class RateLimiter
     protected $userLimit = null;
     protected $userReset = null;
 
+    protected $key = 'rl:';
 
-    public function __construct(RateLimiterInterface $adapter)
+    protected $limit = 100;  // 100 requests in below unit
+    protected $reset = 3600; // one hour
+    protected $cost  = 1;    // each request costs one credit
+
+
+    public function __construct(RateLimiterInterface $adapter, $limit = 100, $reset = 3600, $cost = 1)
     {
         $this->adapter = $adapter;
+
+        $this->limit = $limit;
+        $this->reset = $reset;
+        $this->cost  = $cost;
     }
 
     //
@@ -59,7 +69,42 @@ class RateLimiter
 
     public function setKey($key)
     {
-        $this->adapter->setKey($key);
+        $this->key .= $key;
+    }
+
+    public function getKey()
+    {
+        return $this->key;
+    }
+
+    public function setLimit($limit = 100)
+    {
+        $this->limit = $limit;
+    }
+
+    public function getLimit()
+    {
+        return $this->limit;
+    }
+
+    public function setReset($reset = 3600)
+    {
+        $this->reset = $reset;
+    }
+
+    public function getReset()
+    {
+        return $this->reset;
+    }
+
+    public function setCost($cost = 1)
+    {
+        $this->cost = $cost;
+    }
+
+    public function getCost()
+    {
+        return $this->cost;
     }
 
     public function isLimited()
@@ -71,12 +116,10 @@ class RateLimiter
 
     public function getLimitHeaders()
     {
-        $limit = $this->adapter->getLimit();
-
         return [
-            'X-RateLimit-Limit' => $limit,
-            'X-RateLimit-Remaining' => $limit - $this->userLimit,
-            'X-RateLimit-Reset' => $this->userReset
+            'X-RateLimit-Limit' => $this->limit,
+            'X-RateLimit-Remaining' => $this->limit - $this->userLimit,
+            'X-RateLimit-Reset' => time() + $this->userReset
         ];
     }
 

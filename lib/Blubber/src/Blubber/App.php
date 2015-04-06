@@ -467,12 +467,12 @@ class App extends Request
 
             try {
                 // dispatch our auth event (if any)
-                if (!is_null($auth_hook)) {
+                if (!is_null($auth_hook) && self::hasEventHandler($auth_hook['hook'])) {
                     self::dispatch($auth_hook['hook']);
                 }
 
                 // dispatch the rate-limiting (if any)
-                if (!is_null($rate_hook)) {
+                if (!is_null($rate_hook) && self::hasEventHandler($rate_hook['hook'])) {
                     $rateHeaders = self::dispatch($rate_hook['hook'], [$rate_hook['cost']]);
                 }
 
@@ -556,6 +556,9 @@ class App extends Request
             } else {
                 self::dispatch('error', [new HTTPException(t('route.not.found'), 404)]);
             }
+        } else {
+            // APi creator didn't define any routes.  Don't expose, just 404.
+            self::dispatch('error', [new HTTPException(t('route.not.found'), 404)]);
         }
     }
 
@@ -604,9 +607,6 @@ class App extends Request
                 'message'    => $exception->getMessage()
             ];
 
-            //
-            // Allow user to get a events before they're sent to the client
-            //
             if (self::hasEventHandler('__ERROR__')) {
                 self::dispatch('__ERROR__', $err_response);
             }
