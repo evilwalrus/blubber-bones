@@ -66,6 +66,8 @@ class App extends Request
     protected $_content          = null;
     private   $_requiredHeaders  = [];
 
+    private $_authenticated = false;
+
     protected static $_eventHandlers    = [];
     protected static $_methodCallbacks  = [];
 
@@ -380,6 +382,26 @@ class App extends Request
     }
 
     /**
+     * Return if the user passed authentication or not
+     *
+     * @return bool
+     */
+    public function isAuthenticated()
+    {
+        return !!$this->_authenticated;
+    }
+
+    /**
+     * Returns the hook that we authenticated with
+     *
+     * @return string
+     */
+    public function authenticatedWith()
+    {
+        return $this->_authenticated;
+    }
+
+    /**
      * Check if we're running under SSL (if option enabled)
      *
      * @return void
@@ -467,8 +489,19 @@ class App extends Request
 
             try {
                 // dispatch our auth event (if any)
-                if (!is_null($auth_hook) && self::hasEventHandler($auth_hook['hook'])) {
-                    self::dispatch($auth_hook['hook']);
+                if (!is_null($auth_hook)) {
+                    if (is_array($auth_hook['hook'])) {
+                        foreach ($auth_hook['hook'] as $hook) {
+                            if (self::hasEventHandler($hook) && (self::dispatch($hook) !== false)) {
+                                $this->_authenticated = $hook;
+                                break; // leave the loop since we already authenticated
+                            }
+                        }
+                    } else {
+                        if (self::dispatch($auth_hook['hook']) !== false) {
+                            $this->_authenticated = $hook;
+                        }
+                    }
                 }
 
                 // dispatch the rate-limiting (if any)

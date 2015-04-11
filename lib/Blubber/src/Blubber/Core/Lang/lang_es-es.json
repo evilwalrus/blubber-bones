@@ -14,5 +14,6 @@
   "missing.required.headers": "Falta encabezados requeridos",
   "unsupported.media": "Falta o medios no admitidos; Compruebe cabecera Content-Type de precisión",
   "require.https": "La conexión no era seguro. Inténtalo de nuevo con HTTPS",
-  "deprecated.namespace": "Espacio de nombres está en desuso; por favor utilice espacio de nombres actual se indica en X-Blubber-Upgrade"
+  "deprecated.namespace": "Espacio de nombres está en desuso; por favor utilice espacio de nombres actual se indica en X-Blubber-Upgrade",
+  "too.many.requests": "La limitación de velocidad se ha reunido a su límite. Por favor, ver X-Ratelimit-Reset durante segundos hasta que la limitación de reinicio"
 }

@@ -32,32 +32,44 @@ $app->on('__RATE_LIMIT__', function($cost) use ($app) {
     /**
      * Use the RedisAdapter in our case
      */
-    $red = new RedisAdapter('127.0.0.1', 6379);
-    $rl = new RateLimiter($red);
+    $rl = new RateLimiter(new RedisAdapter('127.0.0.1', 6379));
 
-    /**
-     * TODO: Setup different limit profiles:
-     *   - Non-auth users would have less or no rate-limit
-     *   - Basic auth would have increased privileges
-     *   - OAuth, HMAC, and custom schemes would take the cake
-     */
-
-    /**
-     * These are all default values, but just showing for semantics
-     */
     $rl->setCost($cost);
-    $rl->setLimit(100);
-    $rl->setReset(3600);
+
+    if ($app->isAuthenticated()) {
+
+        // authenticated users get 5000 requests per hour
+        $rl->setLimit(5000);
+
+        $auth = $app->getAuthorization(false);
+
+        //
+        // Get the appropriate storage key for the user
+        //
+        switch ($app->authenticatedWith()) {
+            case 'auth.oauth2':
+                $key = $auth['auth_data']; // gets the Bearer token
+                break;
+
+            case 'auth.basic':
+                $creds = $app->getBasicAuthCredentials($auth['auth_data']);
+                $key = $creds['username'];
+                break;
+
+            case 'auth.hmac':
+                $key = $app->getHeader('X-Public-Key');
+                break;
+        }
+
+        $rl->setKey($key);
+
+    } else {
+        // unauthed client (60 per hour)
+        $rl->setLimit(60);
+        $rl->setKey($app->getRealRemoteAddr());
+    }
 
     /**
-     * Realistically, we'd probably use the users API key and/or hash of some type
-     * in order to identify them and produce a key for storage.
-     *
-     * setKey() is super important here, as it's the only means we have to identify the user
-     */
-    $rl->setKey(md5($app->getRealRemoteAddr()));
-
-    /*
      * if checkLimits() is not true, then it throws an HTTPException
      */
     $rl->checkLimits();
@@ -66,5 +78,5 @@ $app->on('__RATE_LIMIT__', function($cost) use ($app) {
      * return the headers so that we can append them to our headers list after this
      * hook is completed.
      */
-    return array_merge($rl->getLimitHeaders(), ['X-RateLimit-Key' => $rl->getKey()]);
+    return $rl->getLimitHeaders();
 });

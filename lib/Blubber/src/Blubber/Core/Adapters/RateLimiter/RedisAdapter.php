@@ -37,13 +37,21 @@ class RedisAdapter extends RateLimiter implements RateLimiterInterface
     protected $port = 6379;
 
 
-    public function __construct($host, $port)
+    public function __construct($host, $port, $database = null, $password = null)
     {
         $this->host = $host;
         $this->port = $port;
 
         $this->redis = new \Redis();
         $this->redis->connect($this->host, $this->port);
+
+        if (is_int($database)) {
+            $this->redis->select($database);
+        }
+
+        if (is_string($password)) {
+            $this->redis->auth($password);
+        }
     }
 
     // getUserLimit is an all-in-one function.  It will set the proper increments

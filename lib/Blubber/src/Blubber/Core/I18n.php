@@ -60,7 +60,7 @@ class I18n
         }
 
         // if $forceLang is enabled, make it a priority here
-        if (is_string($forceLang) && self::_langExists($forceLang)) {
+        if ((is_string($forceLang) && self::_langExists($forceLang)) || (empty($_GET['_lang']) && self::_langExists($_GET['_lang']))) {
             self::$lang = $forceLang;
         }
     }
