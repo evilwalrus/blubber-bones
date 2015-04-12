@@ -370,14 +370,19 @@ class App extends Request
      *
      * @param  string $event
      * @param  array  $args
+     * @param  bool   $bypass
      * @return mixed
      */
-    public function dispatch($event, array $args = [])
+    public function dispatch($event, array $args = [], $bypass = false)
     {
         $response = null;
 
         if (self::hasEventHandler($event)) {
             $callback = self::$_eventHandlers[$event];
+
+            if ($bypass) {
+                return call_user_func_array($callback->bindTo($this, $this), $args);
+            }
 
             try {
                 $response = call_user_func_array($callback->bindTo($this, $this), $args);
@@ -396,6 +401,7 @@ class App extends Request
                 }
             }
         }
+
         return $response;
     }
 
@@ -510,14 +516,20 @@ class App extends Request
                 if (!is_null($auth_hook)) {
                     if (is_array($auth_hook['hook'])) {
                         foreach ($auth_hook['hook'] as $hook) {
-                            if (self::hasEventHandler($hook) && (self::dispatch($hook) !== false)) {
+                            try {
+                                self::dispatch($hook, [], true);
                                 $this->_authenticated = $hook;
-                                break; // leave the loop since we already authenticated
+                                break;
+                            } catch (HTTPException $ex) {
+                                continue;
                             }
                         }
                     } else {
-                        if (self::dispatch($auth_hook['hook']) !== false) {
+                        try {
+                            self::dispatch($auth_hook['hook'], [], true);
                             $this->_authenticated = $auth_hook['hook'];
+                        } catch (HTTPException $ex) {
+                            self::dispatch('error', [$ex]);
                         }
                     }
                 }

@@ -35,6 +35,7 @@ $app->route('/auth_test', function() use ($app) {
 
             return $response;
         })
+        ->auth(['auth.basic', 'auth.apikey'])   // this does not work at the moment
         ->rateLimit('__RATE_LIMIT__');
 
 });

@@ -22,11 +22,20 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+use Blubber\Exceptions\HTTPException;
+
 $app->on('auth.apikey', function() use ($app) {
     $api_key = $_GET['api_key'];
+    // or...
+    // $api_key = $app->getQueryString(true)['api_key'];
 
     //
     // do some type of lookup with $api_key and return true/false accordingly
     //
 
+    if ($api_key == '1234567890') {
+        return true;
+    }
+
+    throw new HTTPException(\Blubber\t('auth.failed'), 401);
 });

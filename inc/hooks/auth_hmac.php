@@ -22,6 +22,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+use \Blubber\Exceptions\HTTPException;
+
 $app->on('auth.hmac', function() use ($app) {
     //
     // Client must send these headers
