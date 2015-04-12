@@ -54,24 +54,9 @@ $app->on('auth.hmac', function() use ($app) {
         //  getRequestLocation() -> https://localhost/v3/hmac_test
         //
         $hmac->setContent($app->getRequestLocation() . $public_key);
-        $content_hash = $hmac->getSignature();
 
         if ($hmac->hashEquals($hash_header)) {
-            //
-            // Normally we'd send 'true' as a response to show that the user is verified, but
-            // we'll send back some data just to verify the data is being sent through properly
-            //
-            return [
-                'hmac' => [
-                    'public_key' => $public_key,
-                    'content_hash' => $content_hash,
-                    'timestamp' => time()
-                ],
-                'request_headers' => $app->getHeaders(),
-                'request_from' => $app->getRealRemoteAddr(),
-                'request_to' => $app->getLocalAddr(),
-                'ssl_status' => $app->isSecure() ? 'on' : 'off'
-            ];
+            return true;
         } else {
             // 403 code because we did authenticate the user, but not the data
             $denyUser('Hash-matching failed.  Are you sure you hashed properly?', 403);

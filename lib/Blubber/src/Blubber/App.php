@@ -67,6 +67,7 @@ class App extends Request
     private   $_requiredHeaders  = [];
 
     private $_authenticated = false;
+    private $_rateHook = ''; // hack
 
     protected static $_eventHandlers    = [];
     protected static $_methodCallbacks  = [];
@@ -152,8 +153,9 @@ class App extends Request
             'use_output_compression'  => false,
             'require_user_agent'      => false,
             'redirect_old_namespaces' => true,
-            'require_https'           => true,
+            'require_https'           => false,
             'force_user_language'     => 'en',
+            'enable_rate_limiting'    => false,
         ];
 
         foreach ($options as $option => $value) {
@@ -291,6 +293,8 @@ class App extends Request
      */
     public function rateLimit($hookName = '__RATE_LIMIT__', $cost = 1)
     {
+        $this->_rateHook = $hookName; // hack; used later for finishing routes
+
         self::getCurrentRoute()->setMethodRateLimit($this->_currMethod, $hookName, $cost);
 
         return $this;
@@ -314,11 +318,25 @@ class App extends Request
     private function _finishRoutes()
     {
         foreach ($this->_routes as $_route) {
+
+            //
+            // Fill in empty namespacing
+            //
             if (!empty(static::$_validNamespaces)) {
                 if (empty($_namespaces)) {
                     $_route->setNamespaces(static::$_validNamespaces);
                 }
             }
+
+            //
+            // Set cost at 0 for routes methods that do not have rate-limiting
+            //
+            foreach (array_keys($_route->_methodCallbacks) as $method) {
+                if (is_null($_route->getMethodRateLimit($method))) {
+                    $_route->setMethodRateLimit($method, $this->_rateHook, 0);
+                }
+            }
+
 
             $_route->setFinished();
         }
@@ -344,7 +362,7 @@ class App extends Request
      */
     public function hasEventHandler($event)
     {
-        return !!array_key_exists($event, self::$_eventHandlers);
+        return array_key_exists($event, self::$_eventHandlers);
     }
 
     /**
@@ -499,14 +517,16 @@ class App extends Request
                         }
                     } else {
                         if (self::dispatch($auth_hook['hook']) !== false) {
-                            $this->_authenticated = $hook;
+                            $this->_authenticated = $auth_hook['hook'];
                         }
                     }
                 }
 
                 // dispatch the rate-limiting (if any)
-                if (!is_null($rate_hook) && self::hasEventHandler($rate_hook['hook'])) {
-                    $rateHeaders = self::dispatch($rate_hook['hook'], [$rate_hook['cost']]);
+                if (self::getOption('enable_rate_limiting')) {
+                    if (!is_null($rate_hook) && self::hasEventHandler($rate_hook['hook'])) {
+                        $rateHeaders = self::dispatch($rate_hook['hook'], [$rate_hook['cost']]);
+                    }
                 }
 
                 // dispatch the main closure (will only execute if the above are successful)

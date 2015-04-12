@@ -43,7 +43,7 @@ class Route
     protected $_path            = '';
     protected $_hash;
     protected $_validNS         = [];
-    protected $_methodCallbacks = [];
+    public    $_methodCallbacks = [];
 
     /**
      * Route constructor
