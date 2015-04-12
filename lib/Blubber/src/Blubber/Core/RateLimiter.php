@@ -38,9 +38,9 @@ class RateLimiter
 
     public $key;
 
-    public $limit; // = 100;  // 100 requests in below unit
-    public $reset; // = 3600; // one hour
-    public $cost; //  = 1;    // each request costs one credit
+    public $limit = 1000; // 1000 requests in below unit
+    public $reset = 3600; // one hour
+    public $cost  = 1;    // each request costs one credit
 
 
     public function __construct(RateLimiterInterface $adapter)

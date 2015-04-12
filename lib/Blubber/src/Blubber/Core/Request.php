@@ -84,7 +84,11 @@ abstract class Request
      */
     public static function isSecure()
     {
-        return (isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'on');
+        if (array_key_exists('HTTPS', $_SERVER)) {
+            return (isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'on');
+        }
+
+        return false;
     }
 
     /**

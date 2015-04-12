@@ -518,7 +518,9 @@ class App extends Request
             if ($response instanceof Response) {
 
                 // add the rate-limiting headers
-                $response->headers($rateHeaders);
+                if (isset($rateHeaders)) {
+                    $response->headers($rateHeaders);
+                }
 
                 //
                 // As per HTTP spec, Options needs a list of methods set to the Allow header

@@ -35,6 +35,7 @@ $app->on('__RATE_LIMIT__', function($cost) use ($app) {
     $rl = new RateLimiter(new RedisAdapter('127.0.0.1', 6379));
 
     $rl->setCost($cost);
+    $rl->setReset(3600); // default is one hour
 
     if ($app->isAuthenticated()) {
 
@@ -42,6 +43,7 @@ $app->on('__RATE_LIMIT__', function($cost) use ($app) {
         $rl->setLimit(5000);
 
         $auth = $app->getAuthorization(false);
+        $key = '';
 
         //
         // Get the appropriate storage key for the user
