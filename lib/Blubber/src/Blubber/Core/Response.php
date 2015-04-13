@@ -221,6 +221,11 @@ class Response
 
         $headers['X-Request-ID'] = Request::getRequestId();
 
+        // get the execution time; useful for debugging
+        if (array_key_exists('REQUEST_TIME_FLOAT', $_SERVER)) {
+            $headers['X-Request-Time'] = microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'];
+        }
+
         // security headers
         $headers['X-Frame-Options'] = 'sameorigin';
         $headers['X-XSS-Protection'] = '1; mode=block';

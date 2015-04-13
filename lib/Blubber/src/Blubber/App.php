@@ -67,6 +67,7 @@ class App extends Request
     private   $_requiredHeaders  = [];
 
     private $_authenticated = false;
+    private $_authException = null;
     private $_rateHook = ''; // hack
 
     protected static $_eventHandlers    = [];
@@ -521,6 +522,7 @@ class App extends Request
                                 $this->_authenticated = $hook;
                                 break;
                             } catch (HTTPException $ex) {
+                                $this->_authException = $ex;
                                 continue;
                             }
                         }
@@ -531,6 +533,11 @@ class App extends Request
                         } catch (HTTPException $ex) {
                             self::dispatch('error', [$ex]);
                         }
+                    }
+
+                    // nothing survived, get the last HTTPException message
+                    if (!$this->_authenticated && $this->_authException instanceof HTTPException) {
+                        self::dispatch('error', [new HTTPException($this->_authException->getMessage(), $this->_authException->getCode())]);
                     }
                 }
 
