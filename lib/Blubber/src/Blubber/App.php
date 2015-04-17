@@ -118,7 +118,7 @@ class App extends Request
     public function __call($method, $args)
     {
         if (!empty($this->_currRoute)) {
-            if (in_array($method, $this->_methods)) {
+            if (in_array($method, $this->_methods) || $method == 'all') {
                 $this->_currMethod = $method;
                 self::getCurrentRoute()->setMethodCallback($method, $args[0]->bindTo($this, $this));
 
@@ -491,6 +491,100 @@ class App extends Request
         }
     }
 
+    protected function _checkAuth($auth_hook)
+    {
+        if (!is_null($auth_hook)) {
+            if (is_array($auth_hook['hook'])) {
+                foreach ($auth_hook['hook'] as $hook) {
+                    try {
+                        self::dispatch($hook, [], true);
+                        $this->_authenticated = $hook;
+                        break;
+                    } catch (HTTPException $ex) {
+                        $this->_authException = $ex;
+                        continue;
+                    }
+                }
+            } else {
+                try {
+                    self::dispatch($auth_hook['hook'], [], true);
+                    $this->_authenticated = $auth_hook['hook'];
+                } catch (HTTPException $ex) {
+                    self::dispatch('error', [$ex]);
+                }
+            }
+
+            // nothing survived, get the last HTTPException message
+            if (!$this->_authenticated && $this->_authException instanceof HTTPException) {
+                self::dispatch('error', [new HTTPException($this->_authException->getMessage(), $this->_authException->getCode())]);
+            }
+        }
+    }
+
+    public function _checkConditionalRequest($key)
+    {
+        $prefix = 'cache.';
+        $required = ['get', 'set', 'exists'];
+        $ttl = 300;  // default ttl is 5 minutes
+
+        foreach ($required as $hook) {
+            if (!self::hasEventHandler($prefix . $hook)) {
+                // no cache used
+                return false;
+            }
+        }
+
+        // attempt to get the ttl options from the user, if not, use default
+        $cacheOpts = self::dispatch('cache.options');
+        if (array_key_exists('ttl', $cacheOpts)) {
+            $ttl = (int)$cacheOpts['ttl'];
+        }
+
+        // cache headers for Response
+        $setHeaders = [
+            'Expires' => date(DATE_RFC1123, time() + $ttl),
+            'Cache-Control' => 'private; must-revalidate;',
+            'Etag' => '', // this empty value will be overwritten later on
+            'Last-Modified' => date(DATE_RFC1123, time())
+        ];
+
+        // we have the required hooks, move on.
+        if (false !== ($cache = self::dispatch('cache.get', [$key]))) {
+            $cache = json_decode($cache, true);
+
+            // get the proper second counts
+            $expires = $cache['lastModified'] + $ttl;
+            $cache_ttl = $expires - time();
+
+            // our conditional header checks
+            $headers = [
+                'ifModifiedSince' => strtotime($this->getHeader('If-Modified-Since')),
+                'ifNoneMatch' => str_replace('"', '' , $this->getHeader('If-None-Match'))
+            ];
+
+            // cache headers for Response
+            $setHeaders = [
+                'Expires' => date(DATE_RFC1123, $expires),
+                'Cache-Control' => 'private; must-revalidate; max-age=' . $cache_ttl,
+                'Etag' => '"' . $cache['etag'] . '"',
+                'Last-Modified' => date(DATE_RFC1123, $cache['lastModified'])
+            ];
+
+            // check If-Modified-Since header
+            if (!empty($headers['ifModifiedSince']) && $cache['lastModified'] <= strtotime($headers['ifModifiedSince'])) {
+                return (new Response())->write(304)->headers($setHeaders);
+            }
+
+            // check ETag header
+            if (!empty($headers['ifNoneMatch']) && $cache['etag'] == $headers['ifNoneMatch']) {
+                return (new Response())->write(304)->headers($setHeaders);
+            }
+        }
+
+        // no cache used, or conditional not met... send our headers back out
+        return $setHeaders;
+    }
+
     /**
      * Runs a callback for a specified HTTP method
      *
@@ -504,6 +598,7 @@ class App extends Request
         $allow_header = ['Allow' => strtoupper(join(', ', $route->getAvailableMethods()))];
 
         $callback = $route->getMethodCallback($method);
+        $cacheKey = md5($method . $this->getRequestUri());
 
         if (!is_null($callback) && is_array($callback)) {
 
@@ -513,50 +608,64 @@ class App extends Request
             $rate_hook = $route->getMethodRateLimit($method);
 
             try {
-                // dispatch our auth event (if any)
-                if (!is_null($auth_hook)) {
-                    if (is_array($auth_hook['hook'])) {
-                        foreach ($auth_hook['hook'] as $hook) {
-                            try {
-                                self::dispatch($hook, [], true);
-                                $this->_authenticated = $hook;
-                                break;
-                            } catch (HTTPException $ex) {
-                                $this->_authException = $ex;
-                                continue;
-                            }
-                        }
-                    } else {
-                        try {
-                            self::dispatch($auth_hook['hook'], [], true);
-                            $this->_authenticated = $auth_hook['hook'];
-                        } catch (HTTPException $ex) {
-                            self::dispatch('error', [$ex]);
-                        }
-                    }
 
-                    // nothing survived, get the last HTTPException message
-                    if (!$this->_authenticated && $this->_authException instanceof HTTPException) {
-                        self::dispatch('error', [new HTTPException($this->_authException->getMessage(), $this->_authException->getCode())]);
-                    }
+                // dispatch our auth event (if any)
+                self::_checkAuth($auth_hook);
+
+                // methods that require auth cannot be cached
+                if (is_null($auth_hook)) {
+                    $condRequest = self::_checkConditionalRequest($cacheKey);
                 }
 
                 // dispatch the rate-limiting (if any)
                 if (self::getOption('enable_rate_limiting')) {
                     if (!is_null($rate_hook) && self::hasEventHandler($rate_hook['hook'])) {
-                        $rateHeaders = self::dispatch($rate_hook['hook'], [$rate_hook['cost']]);
+                        $cost = (!$condRequest instanceof Response) ? $rate_hook['cost'] : 0;
+                        $rateHeaders = self::dispatch($rate_hook['hook'], [$cost]);
                     }
                 }
 
-                // dispatch the main closure (will only execute if the above are successful)
-                $response = call_user_func_array($closure->bindTo($this, $this), [$this, new Response(), $params]);
+                // We got a response object, that means we're a 304
+                if ($condRequest instanceof Response) {
+                    if (isset($rateHeaders)) {
+                        $condRequest->headers($rateHeaders);
+                    }
+                }
+
+                // headers were returned
+                if (is_array($condRequest)) {
+                    $response = call_user_func_array($closure->bindTo($this, $this), [$this, new Response(), $params]);
+
+                    self::dispatch('cache.set', [$cacheKey, json_encode([
+                        'lastModified' => time(),
+                        'etag' => md5(json_encode($response->getContent()))  // this isn't entirely accurate, but it'll do.
+                    ])]);
+                } elseif ($condRequest instanceof Response) { // output the 304 response
+                    try {
+                        $condRequest->send();
+                    } catch (HTTPException $e) {
+                        self::dispatch('error', [$e]);
+                    }
+                } else { // normal request, respond as usual
+                    $response = call_user_func_array($closure->bindTo($this, $this), [$this, new Response(), $params]);
+                }
             } catch (HTTPException $ex) {
                 self::dispatch('error', [$ex]);
             }
 
             if ($response instanceof Response) {
 
-                // add the rate-limiting headers
+                // if we have cache headers, set them
+                if (is_array($condRequest)) {
+                    $response->headers($condRequest);
+                }
+
+                // Override the conditional headers above and set up some initial values
+                $response->headers([
+                    'Etag' => '"' . md5(json_encode($response->getContent())) . '"'
+                ]);
+
+                // add the rate-limiting headers (only if we're not serving a conditional)
                 if (isset($rateHeaders)) {
                     $response->headers($rateHeaders);
                 }

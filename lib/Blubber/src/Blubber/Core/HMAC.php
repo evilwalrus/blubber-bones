@@ -24,9 +24,6 @@
 
 namespace Blubber\Core;
 
-/**
- * TODO:  All error-handling needs to be added
- */
 
 /**
  * HMAC Class
@@ -93,7 +90,6 @@ class HMAC
      */
     public function getSignature()
     {
-        // TODO:  Allow user to set their own algorithm from hash_algos()
         return hash_hmac('sha256', $this->content, $this->private_key);
     }
 

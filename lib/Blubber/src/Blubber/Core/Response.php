@@ -200,7 +200,6 @@ class Response
 
         $calcContentHeaders = function($data) {
             return [
-                'ETag' => '"' . md5($data) . '"',
                 'Content-Length' => strlen($data)
             ];
         };
@@ -269,7 +268,7 @@ class Response
      */
     private function _validForSend($method)
     {
-        return (!in_array($method, $this->_noBody));
+        return (!in_array($method, $this->_noBody) || $this->_httpCode != 304);
     }
 
     /**

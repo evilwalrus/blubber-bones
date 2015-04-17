@@ -29,4 +29,5 @@ interface RateLimiterInterface
 {
     public function getUserLimit();
     public function getUserReset();
+    public function setAdapterData($input = []);
 }

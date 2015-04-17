@@ -130,7 +130,13 @@ class Route
      */
     public function getMethodCallback($method)
     {
-        return isset($this->_methodCallbacks[$method]) ? $this->_methodCallbacks[$method] : null;
+        if (array_key_exists($method, $this->_methodCallbacks)) {  // check for actual method
+            return $this->_methodCallbacks[$method];
+        } elseif (array_key_exists('all', $this->_methodCallbacks)) {  // no method found, check for catchall
+            return $this->_methodCallbacks['all'];
+        } else {  // failed, no method available
+            return null;
+        }
     }
 
     /**

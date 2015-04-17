@@ -373,7 +373,31 @@ abstract class Request
      */
     public function getContent()
     {
-        return JSON::decode(urldecode(static::$_data));
+        $content_type = self::getHeader('Content-Type');
+        $data = urldecode(static::$_data);
+        $_out = null;
+
+        if (!is_null($content_type)) {
+            switch ($content_type) {
+                case 'application/x-www-form-urlencoded':
+                case 'multipart/form-data':
+                    $_out = [];
+                    parse_str($data, $_out);
+                    break;
+
+                case 'application/xml':
+                    $_out = JSON::decode(JSON::encode(simplexml_load_string($data)), true);
+                    break;
+
+                default:
+                case 'application/json':
+                case 'application/javascript':
+                    $_out = JSON::decode($data);
+                    break;
+
+            }
+        }
+        return $_out;
     }
 
     /**

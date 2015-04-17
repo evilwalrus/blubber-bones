@@ -22,10 +22,35 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-$app->on('cache.get', function($cache_key) use ($app) {
 
+//
+// For our uses, we'll use Redis
+//
+$redis = new Redis();
+$redis->connect('127.0.0.1', 6379);
+
+$app->on('cache.get', function($cache_key) use ($app, $redis) {
+    return $redis->get($cache_key);  // returns false if it doesn't exist
 });
 
-$app->on('cache.set', function($cache_key, $cache_data) use ($app) {
+$app->on('cache.set', function($cache_key, $cache_data) use ($app, $redis) {
+    $ttl = $app->dispatch('cache.options')['ttl'];
 
+    $redis->setex($cache_key, $ttl, $cache_data);  // true if successful
+});
+
+$app->on('cache.exists', function($cache_key) use ($app, $redis) {
+    return $redis->exists($cache_key); // true/false
+});
+
+/**
+ * This is used as a settings fetcher essentially, just used to return our TTL
+ *
+ * This will override default options.  Blubber can then call this hook and get the needed
+ * options for making conditional response.
+ */
+$app->on('cache.options', function() use ($app) {
+    return [
+        'ttl' => 300
+    ];
 });
