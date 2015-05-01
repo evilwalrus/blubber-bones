@@ -58,6 +58,8 @@ function t($key) {
 class App extends Request
 {
 
+    static $_instance = null;
+
     protected $_routes           = [];
     protected $_currRoute        = null;
     protected $_currMethod       = null;
@@ -128,6 +130,18 @@ class App extends Request
 
         self::dispatch('error', [new HTTPException(sprintf(t('invalid.method'), $method, __CLASS__), 500)]);
         return false; // unreachable; put here just to clear IDE errors
+    }
+
+    /**
+     * Self-manipulation
+     */
+    public static function getInstance()
+    {
+        if (!(self::$_instance instanceof self)) {
+            self::$_instance = new self();  // fix this to cater to args passed to constructor
+        }
+
+        return self::$_instance;
     }
 
     /**
@@ -542,8 +556,8 @@ class App extends Request
 
         // cache headers for Response
         $setHeaders = [
-            'Expires' => date(DATE_RFC1123, time() + $ttl),
-            'Cache-Control' => 'private; must-revalidate;',
+            'Expires' => date(DATE_RFC1123, time()),
+            'Cache-Control' => 'no-cache',
             'Etag' => '', // this empty value will be overwritten later on
             'Last-Modified' => date(DATE_RFC1123, time())
         ];

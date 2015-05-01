@@ -256,8 +256,9 @@ class Response
             }
 
             echo $data;
-            exit;
         }
+
+        exit;
     }
 
     /**
