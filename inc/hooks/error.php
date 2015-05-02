@@ -23,6 +23,6 @@
  */
 
 // System hook, used to report to the API creator the specific errors
-$app->on('__ERROR__', function($request_id, $resource, $code, $message) {
+$app->on('__ERROR__', function($error) {
 
 });

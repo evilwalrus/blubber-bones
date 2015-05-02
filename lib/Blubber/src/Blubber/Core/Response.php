@@ -238,7 +238,7 @@ class Response
         self::_processHeaders($headers);
 
         if ($this->_validForSend($reqMethod) && !empty($content)) {
-            if (App::getOption('use_output_compression') &&
+            if (App::getOption('core', 'output.compression') &&
                 extension_loaded('zlib') &&
                 array_key_exists('gzip', Request::getAcceptEncoding()))
             {

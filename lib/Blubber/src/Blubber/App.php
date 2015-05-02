@@ -79,14 +79,13 @@ class App extends Request
      * App constructor
      *
      * @param array $namespaces
-     * @param array $options
      */
-    public function __construct(array $namespaces = [], array $options = [])
+    public function __construct(array $namespaces = [])
     {
         date_default_timezone_set('GMT');
 
         // parse out the user's options
-        self::_setOptions($options);
+        self::_setOptions();
 
         // set the request headers
         self::_setRequestHeaders();
@@ -156,27 +155,28 @@ class App extends Request
     /**
      * Set default options for APP class
      *
-     * @param  array $options
      * @return void
      */
-    private function _setOptions(array $options = [])
+    private function _setOptions()
     {
         //
         // Define default class options here
         //
         self::$_options = [
-            'use_output_compression'  => false,
-            'require_user_agent'      => false,
-            'redirect_old_namespaces' => true,
-            'require_https'           => false,
-            'force_user_language'     => 'en',
-            'enable_rate_limiting'    => false,
+            'core' => [
+                'output.compression'      => false,
+                'require.user.agent'      => false,
+                'redirect.old.namespaces' => true,
+                'require.https'           => false,
+                'force.user.language'     => 'en',
+                'enable.rate.limiting'    => false,
+            ]
         ];
 
-        foreach ($options as $option => $value) {
-            if (array_key_exists($option, self::$_options)) {
-                self::$_options[$option] = $value;
-            }
+        $userOpts = self::dispatch('__CONFIG__');
+
+        if (is_array($userOpts)) {
+            array_replace_recursive(self::$_options, $userOpts);
         }
     }
 
@@ -199,34 +199,17 @@ class App extends Request
     }
 
     /**
-     * Set a single option (or an array of options) in the App
-     *
-     * @param  mixed $option
-     * @param  mixed $value
-     * @return void
-     */
-    public static function setOption($option, $value = null)
-    {
-        if (is_array($option)) {
-            foreach ($option as $k => $v) {
-                self::$_options[$k] = $v;
-            }
-        } else {
-            self::$_options[$option] = $value;
-        }
-
-    }
-
-    /**
      * Get a user or default option value
      *
      * @param  string $option
      * @return null
      */
-    public static function getOption($option)
+    public static function getOption($key, $option)
     {
-        if (array_key_exists($option, self::$_options)) {
-            return self::$_options[$option];
+        if (array_key_exists($key, self::$_options)) {
+            if (array_key_exists($option, self::$_options[$key])) {
+                return self::$_options[$key][$option];
+            }
         }
 
         return null;
@@ -447,7 +430,7 @@ class App extends Request
      */
     protected function _checkRequireSSL()
     {
-        if (self::getOption('require_https')) {
+        if (self::getOption('core', 'require.https')) {
             if (!self::isSecure()) {
                 self::dispatch('error', [new HTTPException(t('require.https'), 400)]);
             }
@@ -489,7 +472,7 @@ class App extends Request
         //
         // Check for a valid user-agent (if required) before we process any callbacks
         //
-        if (self::getOption('require_user_agent')) {
+        if (self::getOption('core', 'require.user.agent')) {
             if (self::hasEventHandler('__USER_AGENT__')) {
                 if (null !== ($_ua = self::getUserAgent())) {
                     $_uaCheck = self::dispatch('__USER_AGENT__', [$_ua]);
@@ -632,7 +615,7 @@ class App extends Request
                 }
 
                 // dispatch the rate-limiting (if any)
-                if (self::getOption('enable_rate_limiting')) {
+                if (self::getOption('core', 'enable.rate.limiting')) {
                     if (!is_null($rate_hook) && self::hasEventHandler($rate_hook['hook'])) {
                         $cost = (!$condRequest instanceof Response) ? $rate_hook['cost'] : 0;
                         $rateHeaders = self::dispatch($rate_hook['hook'], [$cost]);
@@ -702,7 +685,7 @@ class App extends Request
                     $headers['X-Blubber-Warn']    = t('deprecated.namespace');
                     $headers['X-Blubber-Upgrade'] = self::getActiveNamespace();
 
-                    if (self::getOption('redirect_old_namespaces')) {
+                    if (self::getOption('core', 'redirect.old.namespaces')) {
                         $headers['Location'] = '/' . self::getActiveNamespace() . '/' . self::getRequestPath();
 
                         // change the response to a 301 (w/ no data) and forward the user
@@ -805,7 +788,7 @@ class App extends Request
             ];
 
             if (self::hasEventHandler('__ERROR__')) {
-                self::dispatch('__ERROR__', $err_response);
+                self::dispatch('__ERROR__', [$err_response]);
             }
 
             $response = new Response();
