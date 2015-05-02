@@ -212,6 +212,9 @@ class Response
         $headers['Status']        = sprintf('%d %s', $statusCode, $this->_validCodes[$statusCode]);
         $headers['X-Powered-By']  = sprintf('%s/%s (%s)', \Blubber\PROJECT_NAME, \Blubber\PROJECT_VERSION, \Blubber\PROJECT_URL);
 
+        // CORS header
+        $headers['Access-Control-Allow-Origin'] = '*';
+
         if ($this->_validForSend($reqMethod) && !empty($content)) {
             $headers['Content-Language'] = I18n::getLang();
             $headers['Content-Type']     = JSON::getContentType();
@@ -222,7 +225,9 @@ class Response
 
         // get the execution time; useful for debugging
         if (array_key_exists('REQUEST_TIME_FLOAT', $_SERVER)) {
-            $headers['X-Request-Time'] = microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'];
+            $headers['X-Request-Time'] = round(microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'], 4);
+        } else {
+            $headers['X-Request-Time'] = round(microtime(true) - $GLOBALS['__runtime'], 4);
         }
 
         // security headers

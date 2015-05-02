@@ -84,6 +84,9 @@ class App extends Request
     {
         date_default_timezone_set('GMT');
 
+        // setup our runtime indicator
+        $GLOBALS['__runtime'] = microtime(true);
+
         // parse out the user's options
         self::_setOptions();
 
